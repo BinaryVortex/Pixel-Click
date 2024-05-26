@@ -1,0 +1,299 @@
+<html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
+    <link rel="icon" href="favicon.ico"/>
+    
+    <title>Pixel Click</title>
+    <style>
+    
+    body {overflow:hidden;}
+    
+    * { margin: 0; padding: 0;}
+    
+    #pix {
+        display: block;
+        background: #FFF;
+    }
+    /*
+    #top, #bottom, #left, #right {
+        background: #FFF;
+        position: fixed;
+        }
+        #left, #right {
+            top: 0; bottom: 0;
+            width: 30px;
+            }
+            #left { left: 0; }
+            #right { right: 0; }
+            
+        #top, #bottom {
+            left: 0; right: 0;
+            height: 30px;
+            }
+            #top { top: 0; }
+            #bottom { bottom: 0; }*/
+    </style> 
+    <div id="left"></div>
+    <div id="right"></div>
+    <div id="top"></div>
+    <div id="bottom"></div>
+    <canvas id="pix" width="1366" height="624"></canvas>
+    <script>
+    window.onload = function(){
+        
+        var canvas = document.getElementById("pix");
+        var ctx = canvas.getContext("2d");
+        
+        var W = window.innerWidth, H = window.innerHeight;
+        canvas.width = W;
+        canvas.height = H;
+        
+        var gap = 0;
+        var wid = 30,
+            x = gap,
+            y = gap;
+        
+        var cHue = 1,
+            cSat = 100,
+            cLum = 50;
+            
+        var cColor = "hsl(" + cHue + "," + cSat + "%," + cLum + "%)";;
+        
+        function isTouchDevice() {
+               var el = document.createElement('div');
+               el.setAttribute('ongesturestart', 'return;');
+               if(typeof el.ongesturestart == "function"){
+                  return true;
+               }
+            else {
+                  return false
+               }
+        }
+        
+        function rando(min,max){
+            return Math.floor(Math.random()*max)+min;	
+        }
+        
+        var rNum = (W<720) ? 540 : 360;
+        
+        function rainbowHeader(t){
+            var ratio = (t-(5*(wid+gap)))/ (W);
+                                            //-(wid+gap));
+              var hue = Math.floor(rNum*ratio); //360
+            cHue = hue;
+            return "hsl(" + hue + "," + cSat + "%," + cLum + "%)";
+        }
+            
+        function randomColor() {
+            var rm = 255,
+                gm = 255,
+                bm = 255;
+            var r = Math.round(Math.random()*rm);
+            var g = Math.round(Math.random()*gm);
+            var b = Math.round(Math.random()*bm);
+            var a = (Math.random()*.5)+.7;
+            var rgba = "rgba("+r+", "+g+", "+b+", "+a+")";
+            return rgba;
+        }
+        
+        function drawPixel(dx,dy,color){
+            ctx.beginPath();
+            ctx.rect(dx, dy, wid, wid);
+              ctx.fillStyle = color;
+              ctx.fill();
+            return false;
+        }
+        
+        function drawPix(){
+            ctx.beginPath();
+            ctx.rect(x, y, wid, wid);
+              ctx.fillStyle = "rgba(0,0,0,.03)";
+              ctx.fill();
+            return false;
+        }
+        
+        function setup(){
+            while(y<H){
+            drawPix();
+            x += wid + gap;
+                if(x>W){
+                    x = gap;
+                    y += wid + gap;
+                }
+            }
+            return false;
+        }
+        
+        function createHeader(){
+            var px = 5*(wid+gap);
+            var py = (wid+gap)+1;
+            var pColor = randomColor();
+            var coords = 0;
+            var row = 1;
+            while(px <= (W-(wid+gap)) && py <= (4*(wid+gap))){
+                
+                if(row == 1){
+                    cLum = 75;
+                    pColor = rainbowHeader(px);
+                }
+                else if(row == 2){
+                    cLum = 50;
+                    pColor = rainbowHeader(px);
+                }
+                else{
+                    cLum = 25;
+                    pColor = rainbowHeader(px);
+                }
+                
+                coords = getPixelWithCoords(px,py);
+                drawPixel(coords.x, coords.y, pColor);
+                px+=(wid+gap);
+                
+                if(px > (W-(wid+gap))){
+                    py+=(wid+gap);
+                    px = 5*(wid+gap);
+                    row+=1;
+                }
+            }
+        }
+        
+        function getPixel(mousePos){
+            var px = 0, py = 0;
+            
+            for(var i = 0; i < mousePos.x; i += wid + gap){ px = i + gap; }
+            for(var i = 0; i < mousePos.y; i += wid + gap){ py = i + gap; }
+            
+            return { x: px, y: py };
+        }
+        
+        function getPixelWithCoords(gx,gy){
+            var px = 0, py = 0;
+            for(var i = 0; i < gx; i += wid + gap){ px = i + gap; }
+            for(var i = 0; i < gy; i += wid + gap){ py = i + gap; }
+            
+            return { x: px, y: py };
+        }
+        
+        function drawCurrentColor(){
+            ctx.beginPath();
+            var start = wid+gap+gap,
+                width = 3*(wid+gap)-gap;
+            ctx.rect(start, start, width,width);
+              ctx.fillStyle = cColor;
+              ctx.fill();
+        }
+        
+        function checkLocation(m){
+            var bool = false;
+            var pixelWidth = wid+gap+gap + 3*(wid+gap)-gap;
+            if(m.y <= (4*(wid+gap)) && m.x <= pixelWidth){
+                cColor = (cColor=="#FFFFFF") ? "#C0C0C0" : 
+                         (cColor=="#C0C0C0") ? "#808080" : 
+                         (cColor=="#808080") ? "#404040" :
+                         (cColor=="#404040") ? "#000000" :"#FFFFFF";
+                
+                drawCurrentColor();
+            }
+            else if(m.y <= (2*(wid+gap))){
+                cLum = 75;
+                cColor = rainbowHeader(m.x);
+                drawCurrentColor();	
+            }
+            else if(m.y <= (3*(wid+gap))){
+                cLum = 50;
+                cColor = rainbowHeader(m.x);
+                drawCurrentColor();	
+            }
+            else if(m.y <= (4*(wid+gap))){
+                cLum = 25;
+                cColor = rainbowHeader(m.x);
+                drawCurrentColor();	
+            }
+            else if(m.x <= (wid+gap) || m.x >= (W-(2*(wid+gap)))){
+                bool = true;
+            }
+            else{
+                var pixPos = getPixel(m);
+                drawPixel(pixPos.x, pixPos.y, cColor);
+                bool = true;
+            }
+            return bool;
+        }
+    
+        function getMousePos(canvas, evt) {
+            var rect = canvas.getBoundingClientRect();
+            return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top
+            };
+        }
+        
+        var down = false;
+        
+        if(isTouchDevice()==true){
+            canvas.addEventListener("touchstart", function(evt) {
+                var mousePos = getMousePos(canvas, evt);
+                var pixPos = getPixel(mousePos);
+                if(checkLocation(mousePos)==false)return false;
+            
+                down = true;
+                
+                canvas.addEventListener("touchmove", function(evt) {
+                    mousePos = getMousePos(canvas, evt);
+                    pixPos = getPixel(mousePos);
+                    
+                    if(!down || checkLocation(mousePos)==false)canvas.removeEventListener("touchmove",arguments.callee,false);
+                    
+                }, false);
+            
+            }, false);
+        
+            canvas.addEventListener("touchend", function(evt) {
+                down = false;			
+            }, false);
+        }
+        else{
+            canvas.addEventListener("mousedown", function(evt) {
+                var mousePos = getMousePos(canvas, evt);
+                var pixPos = getPixel(mousePos);
+                if(checkLocation(mousePos)==false)return false;
+            
+                down = true;
+                
+                canvas.addEventListener("mousemove", function(evt) {
+                    mousePos = getMousePos(canvas, evt);
+                    pixPos = getPixel(mousePos);
+                    
+                    if(!down || checkLocation(mousePos)==false)canvas.removeEventListener("mousemove",arguments.callee,false);
+                    
+                }, false);
+        
+            }, false);
+        
+            canvas.addEventListener("mouseup", function(evt) {
+                down = false;			
+            }, false);
+        }
+        
+        //MAIN
+        //setup();
+        createHeader();
+        drawCurrentColor();
+        //setInterval(animate,1);
+        
+        function writeMessage(canvas, message) {
+            ctx.clearRect(300, 300, 300, 34);
+            ctx.font = '18pt Calibri';
+            ctx.fillStyle = 'black';
+            ctx.fillText(message, 310, 325);
+        }
+        
+        function animate(){
+            var ax = rando(0,W);
+            var ay = rando(0,H);
+            var pi = getPixelWithCoords(ax,ay);
+            drawPixel(pi.x,pi.y,randomColor());
+        }
+        
+    }
+    </script>
+    
+    </body></html>
